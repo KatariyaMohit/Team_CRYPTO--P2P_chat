@@ -72,9 +72,6 @@ Message from 192.168.1.11:6000 [TeamB]: Hello, how are you?
 - Ensure that firewall settings allow communication on the chosen ports.
 - This program is for educational purposes and does not include encryption.
 
-## License
-This project is licensed under the MIT License. Feel free to modify and enhance it!
-
 ## Contributions
 Pull requests are welcome! If you find a bug or want to add features, feel free to open an issue.
 
