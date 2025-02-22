@@ -37,7 +37,7 @@ For Microsoft Visual Studio, create a new C++ project and include the source cod
 
 ### 3. Run the Program
 ```sh
-chat_program.exe
+.\chat_program.exe
 ```
 
 ## How It Works
