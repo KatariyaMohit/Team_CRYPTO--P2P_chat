@@ -24,7 +24,7 @@ Ensure you have the following installed:
 
 ### 1. Clone the Repository
 
-git clone https://github.com/yourusername/Team_CRYPTO--P2P_chat.git
+git clone https://github.com/KatariyaMohit/Team_CRYPTO--P2P_chat.git
 cd Team_CRYPTO--P2P_chat
 
 ### 2. Compile the Code
