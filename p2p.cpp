@@ -11,6 +11,7 @@
 #include <set>
 
 #pragma comment(lib, "ws2_32.lib")
+
 using namespace std;
 
 mutex peer_mutex;
@@ -41,6 +42,8 @@ string getLocalIP() {
     return "127.0.0.1";
 }
 
+
+// Function to receive messages
 void receiveMessages(SOCKET server_socket) {
     while (true) {
         struct sockaddr_in client_addr;
@@ -49,7 +52,8 @@ void receiveMessages(SOCKET server_socket) {
 
         SOCKET client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &addr_len);
         if (client_socket == INVALID_SOCKET) {
-            cerr << "Error accepting connection" << endl;
+            if (WSAGetLastError() == WSAEINTR) break;
+            cerr << "Error accepting connection: " << WSAGetLastError() << endl;
             continue;
         }
 
@@ -65,8 +69,8 @@ void receiveMessages(SOCKET server_socket) {
             string sender_message;
             getline(iss, sender_message);
             sender_message.erase(0, sender_message.find_first_not_of(" "));
-            {
-                lock_guard<mutex> lock(peer_mutex);
+
+            lock_guard<mutex> lock(peer_mutex);
             if (sender_message == "exit") {
                 peers.erase(sender_info);
                 cout << "\n" << sender_info << " [" << sender_team << "] has disconnected." << endl;
@@ -80,7 +84,6 @@ void receiveMessages(SOCKET server_socket) {
             }
         }
 
-        }
         closesocket(client_socket);
     }
 }
@@ -125,7 +128,7 @@ void sendMessage(string my_ip, int my_port) {
         else if (choice == 2) {
             cout << "\nQuerying active peers..." << endl;
             string query_message = my_ip + ":" + to_string(my_port) + " " + team_name + " query";
-
+            
             this_thread::sleep_for(chrono::seconds(2));
 
             cout << "\nActive Peers:" << endl;
@@ -207,13 +210,13 @@ void sendMessage(string my_ip, int my_port) {
                 if (pos == string::npos) continue;
                 string ip = peer.substr(0, pos);
                 int port = stoi(peer.substr(pos + 1));
-
+        
                 SOCKET client = socket(AF_INET, SOCK_STREAM, 0);
                 struct sockaddr_in serv_addr;
                 serv_addr.sin_family = AF_INET;
                 serv_addr.sin_port = htons(port);
                 inet_pton(AF_INET, ip.c_str(), &serv_addr.sin_addr);
-
+        
                 if (connect(client, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) != SOCKET_ERROR) {
                     string exit_message = my_ip + ":" + to_string(my_port) + " " + team_name + " exit";
                     send(client, exit_message.c_str(), exit_message.size(), 0);
@@ -221,8 +224,11 @@ void sendMessage(string my_ip, int my_port) {
                 closesocket(client);
             }
             peer_mutex.unlock();
+        
+            cout << "Exited" << endl;
             break;
         }
+        
     }
 }
 
@@ -242,14 +248,27 @@ int main() {
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(my_port);
-    bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));
-    listen(server_socket, 5);
+
+    if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
+        cerr << "Bind failed. Exiting...\n";
+        WSACleanup();
+        return 1;
+    }
+
+    if (listen(server_socket, 5) == SOCKET_ERROR) {
+        cerr << "Listen failed. Exiting...\n";
+        WSACleanup();
+        return 1;
+    }
+
     cout << "Server listening on " << my_ip << ":" << my_port << endl;
 
     thread recv_thread(receiveMessages, server_socket);
-    sendMessage(my_ip, my_port);
 
+    sendMessage(my_ip, my_port);
     closesocket(server_socket);
+    recv_thread.detach(); 
     WSACleanup();
+    
     return 0;
 }
