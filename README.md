@@ -50,8 +50,7 @@ chat_program.exe
    - **Connect to known peers**: Send a connection message to previously contacted peers.
    - **Quit the program**: Exit the chat application.
 5. Messages are formatted as:
-   ```
-    sender_IP:port team_name message
+   ``` sender_IP:port team_name message
    ```
 6. The receiver stores the sender’s information and displays the message.
 
